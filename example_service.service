@@ -1,0 +1,11 @@
+[Unit]
+Description=Dynamically Update Google Domains with provided hosts
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/path/to/your/exe
+Restart=always
+
+[Install]
+WantedBy=default.target
