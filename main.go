@@ -23,10 +23,10 @@ func main() {
 	// cmd line function
 	var data []byte
 	var err error
-	if len(os.Args) > 2 {
+	if len(os.Args) >= 2 {
 		data, err = os.ReadFile(os.Args[1])
 		if err != nil {
-			log.Fatalf("Cant find config file in home dir, please place yaml at `~/.ddns_gdomains: %s", err)
+			log.Fatalf("Cant read file provided, please pass a valid config file: %s", err)
 		}
 	} else {
 		// Load config
