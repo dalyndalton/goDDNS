@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/user"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 )
@@ -42,25 +43,31 @@ func main() {
 		log.Fatalf("Cant parse config file: %s", err)
 	}
 
+	var wg sync.WaitGroup
 	for _, cred := range cfg {
+		wg.Add(1)
 
-		// HTTP request
-		request_url := fmt.Sprintf("https://%s:%s@domains.google.com/nic/update?hostname=%s", cred.Username, cred.Password, cred.Hostname)
-		req, err := http.NewRequest("GET", request_url, nil)
-		if err != nil {
-			log.Fatalf("Cannot create http request object, %s", err)
-		}
+		go func(cred Credential) {
+			defer wg.Done()
+			// HTTP request
+			request_url := fmt.Sprintf("https://%s:%s@domains.google.com/nic/update?hostname=%s", cred.Username, cred.Password, cred.Hostname)
+			req, err := http.NewRequest("GET", request_url, nil)
+			if err != nil {
+				log.Fatalf("Cannot create http request object, %s", err)
+			}
 
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			log.Fatalf("Request failed: %s", err)
-		}
-		defer resp.Body.Close()
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				log.Fatalf("Request failed: %s", err)
+			}
+			defer resp.Body.Close()
 
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatalf("Failed to read response")
-		}
-		log.Println(string(body))
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatalf("Failed to read response")
+			}
+			log.Println("Hostname: ", cred.Hostname, " -> ", string(body))
+		}(cred)
 	}
+	wg.Wait()
 }
